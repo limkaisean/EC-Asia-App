@@ -36,7 +36,6 @@ orders = [
     }
 ]
 
-
 customer_devices_orders = {
 
 }
@@ -58,12 +57,13 @@ def hello():
 
 @socketio.on('connect')
 def test_connect():
-    print('connected')
     socketio.emit('connect', {'data': 'Connected'})
+    # TODO: store socket
 
 @socketio.on('disconnect')
 def test_disconnect():
     print('Client disconnected')
+    # TODO: remove socket
 
 @socketio.on('update_order_status')
 def message_handler(message):
@@ -77,19 +77,22 @@ def message_handler(message):
 @socketio.on('order_request')
 def orders_handler(message):
     order = {}
-    for drink in message.data:
-        order[drink['id']] = drink['quantity']
+    # for drink in message.data:
+    #     order[drink['id']] = drink['quantity']
     
-    order['status'] = 'received'
-    # add order to customer_devices_orders
-    customer_devices_orders[id] = order
+    # order['status'] = 'received'
+
+    global id
+    # # add order to customer_devices_orders
+    # customer_devices_orders[id] = order
+    order['id'] = id
     id += 1
 
-    # send confirmation and orders to customer device
-    socketio.emit('order_response', {'isSuccesful': True, 'order': order})
-    # send order to barista devices
-    for bid in barista_devices_sockets:
-        barista_devices_sockets[bid].emit('new_order', order)
+    # # send confirmation and orders to customer device
+    socketio.emit('order_response', {'isSuccessful': True, 'order': order})
+    # # send order to barista devices
+    # for bid in barista_devices_sockets:
+    #     barista_devices_sockets[bid].emit('new_order', order)
 
 @socketio.on_error_default  # handles all namespaces without an explicit error handler
 def default_error_handler(e):
