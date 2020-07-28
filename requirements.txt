@@ -8,3 +8,4 @@ Flask-SocketIO
 pytz
 gevent
 gevent-websocket
+gunicorn
