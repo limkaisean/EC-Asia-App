@@ -6,3 +6,4 @@ MarkupSafe==1.0
 Werkzeug==0.15.3
 Flask-SocketIO
 pytz
+gevent
