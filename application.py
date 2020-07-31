@@ -12,17 +12,30 @@ socketio.init_app(app, cors_allowed_origins="*")
 
 # ASSUMPTION: there can only be one session per meeting room
 # TODO: update meeting room socket on connecting
+# TODO: reset order id daily
+# TODO: restrict allowed cors origins
+# TODO: send a message upon an error so that the frontend can display an error notification
 
 STATUS_RECEIVED = 'received'
 STATUS_PREPARING = 'preparing'
 STATUS_SERVING = 'serving'
 STATUS_COMPLETED = 'completed'
 
+HANDLER_ERROR_MSG = 'An error ocurred in handler:'
+
 customer_devices_sockets = {}
 customer_devices_orders = {}
 barista_devices = []
-id = 0
+id = 1
 
+def get_all_orders():
+    ''' 
+        Returns a dictionary of <order id>, <order> pairs.
+    '''
+    all_orders = customer_devices_orders.values()
+    all_orders_flat = {oId: room_orders[oId] for room_orders in all_orders for oId in room_orders}
+    return all_orders_flat
+    
 @app.route("/")
 def hello():
     print("Handling request to home page.")
@@ -63,7 +76,7 @@ def message_handler(message):
 
         socketio.emit('update_status_relay', message, room=customer_devices_sockets[meeting_room])
     except Exception as e:
-        print('Error2:', e)
+        print(HANDLER_ERROR_MSG + 'update_status_request', e)
 
 @socketio.on('barista_orders_request')
 def barista_orders(message):
@@ -71,11 +84,9 @@ def barista_orders(message):
         if request.sid not in barista_devices:
             barista_devices.append(request.sid) 
         
-        all_orders = customer_devices_orders.values()
-        all_orders_flat = {oId: room_orders[oId] for room_orders in all_orders for oId in room_orders}
-        socketio.emit('barista_orders_response', all_orders_flat)
+        socketio.emit('barista_orders_response', get_all_orders())
     except Exception as e:
-        print('Error bar', e)
+        print(HANDLER_ERROR_MSG + 'barista_orders_request', e)
 
 @socketio.on('confirmed_orders_request')
 def confirmed_orders(message):
@@ -84,7 +95,7 @@ def confirmed_orders(message):
         customer_devices_sockets[meeting_room] = request.sid
         socketio.emit('confirmed_orders_response', customer_devices_orders[meeting_room])
     except Exception as e:
-        print('Error orders req', e)
+        print(HANDLER_ERROR_MSG + 'confirmed_orders_request', e)
 
 @socketio.on('order_request')
 def order(message):
@@ -113,13 +124,10 @@ def order(message):
         # send confirmation and orders to customer device
         socketio.emit('order_response', {'isSuccessful': True, 'order': order})
         # send order to barista devices
-
-        all_orders = customer_devices_orders.values()
-        all_orders_flat = {oId: room_orders[oId] for room_orders in all_orders for oId in room_orders}
         for bid in barista_devices:
-            socketio.emit('barista_orders_response', all_orders_flat, room=bid)
+            socketio.emit('barista_orders_response', get_all_orders(), room=bid)
     except Exception as e:
-        print('Error:', e)
+        print(HANDLER_ERROR_MSG + 'order_request', e)
 
 @socketio.on_error_default  # handles all namespaces without an explicit error handler
 def default_error_handler(e):
