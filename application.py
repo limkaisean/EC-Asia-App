@@ -43,21 +43,21 @@ def hello():
 
 @socketio.on('connect')
 def connect():
-    print('Client connected')
     socketio.emit('connected', {})
 
 @socketio.on('disconnect')
 def disconnect():
-    if request.sid in barista_devices:
+    if request.sid in barista_devices: 
         barista_devices.remove(request.sid)
 
 @socketio.on('connect_info')
 def connect_info(message):
-    print('connect_info')
     customer_devices_sockets[meeting_room] = request.sid
 
 @socketio.on('update_status_request')
 def message_handler(message):
+    ''' Handler for updating the status of an order, by a barista
+    '''
     try:
         if request.sid not in barista_devices:
             barista_devices.append(request.sid)
@@ -80,6 +80,8 @@ def message_handler(message):
 
 @socketio.on('barista_orders_request')
 def barista_orders(message):
+    ''' Handler for fetching all orders, for a barista
+    '''
     try:
         if request.sid not in barista_devices:
             barista_devices.append(request.sid) 
@@ -90,6 +92,8 @@ def barista_orders(message):
 
 @socketio.on('confirmed_orders_request')
 def confirmed_orders(message):
+    ''' Handler for confirming fetching all orders for a particular meeting room
+    '''
     try:
         meeting_room = str(message['meetingRoom'])
         customer_devices_sockets[meeting_room] = request.sid
@@ -99,6 +103,8 @@ def confirmed_orders(message):
 
 @socketio.on('order_request')
 def order(message):
+    ''' Handler for a new order
+    '''
     try:        
         order = {}
         order['beverages'] = message['beverages']
