@@ -111,7 +111,7 @@ def order(message):
         order['status'] = STATUS_RECEIVED
 
         # get Singapore time in 'hh:mm period' format
-        order['time'] = tz.localize(datetime.now(), is_dst=None).strftime('%l:%M %p')
+        order['time'] = tz.localize(datetime.now(), is_dst=None).strftime('%H:%M')
         global id
         order['id'] = id
         id += 1
